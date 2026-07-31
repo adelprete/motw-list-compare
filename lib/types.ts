@@ -13,4 +13,6 @@ export interface ListData {
 export interface MoviesData {
   scrapedAt: string;
   lists: ListData[];
+  /** Letterboxd slugs of past MotW winners. */
+  pastWinnerSlugs: string[];
 }

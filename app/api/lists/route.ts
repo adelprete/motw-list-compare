@@ -7,7 +7,7 @@ const CACHE_SECONDS = 60 * 5;
 
 const getCachedLists = unstable_cache(
   async () => scrapeAllLists(),
-  ["letterboxd-lists"],
+  ["letterboxd-lists-v2"],
   { revalidate: CACHE_SECONDS },
 );
 

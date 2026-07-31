@@ -3,13 +3,13 @@ import {
   lists,
   LETTERBOXD_PAGE_SIZE,
   MAX_MOVIES_PER_LIST,
+  MAX_PAST_WINNERS,
+  PAST_MOTW_WINNERS_URL,
 } from "./lists-config";
 import type { ListData, Movie, MoviesData } from "./types";
 
 const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-
-const MAX_PAGES = Math.ceil(MAX_MOVIES_PER_LIST / LETTERBOXD_PAGE_SIZE);
 
 function buildPosterUrl(filmId: string, slug: string): string {
   const posterSlug = slug.replace(/-\d{4}$/, "");
@@ -52,14 +52,25 @@ function parseMoviesFromHtml(html: string): Movie[] {
   return movies;
 }
 
+const FETCH_TIMEOUT_MS = 15_000;
+
 async function fetchPage(url: string): Promise<string> {
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent": USER_AGENT,
-      Accept: "text/html,application/xhtml+xml",
-    },
-    cache: "no-store",
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      headers: {
+        "User-Agent": USER_AGENT,
+        Accept: "text/html,application/xhtml+xml",
+      },
+      cache: "no-store",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "TimeoutError") {
+      throw new Error(`Timed out fetching ${url} after ${FETCH_TIMEOUT_MS}ms`);
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     throw new Error(
@@ -75,12 +86,16 @@ function pageUrl(baseUrl: string, page: number): string {
   return page <= 1 ? normalized : `${normalized}page/${page}/`;
 }
 
-async function scrapeList(username: string, url: string): Promise<ListData> {
+async function scrapeListMovies(
+  url: string,
+  maxMovies: number,
+): Promise<Movie[]> {
   const movies: Movie[] = [];
   const seen = new Set<string>();
+  const maxPages = Math.ceil(maxMovies / LETTERBOXD_PAGE_SIZE);
   let page = 1;
 
-  while (movies.length < MAX_MOVIES_PER_LIST && page <= MAX_PAGES) {
+  while (movies.length < maxMovies && page <= maxPages) {
     const pageMovies = parseMoviesFromHtml(
       await fetchPage(pageUrl(url, page)),
     );
@@ -88,7 +103,7 @@ async function scrapeList(username: string, url: string): Promise<ListData> {
     if (pageMovies.length === 0) break;
 
     for (const movie of pageMovies) {
-      if (movies.length >= MAX_MOVIES_PER_LIST) break;
+      if (movies.length >= maxMovies) break;
       if (seen.has(movie.slug)) continue;
       seen.add(movie.slug);
       movies.push(movie);
@@ -98,16 +113,31 @@ async function scrapeList(username: string, url: string): Promise<ListData> {
     page += 1;
   }
 
+  return movies;
+}
+
+async function scrapeList(username: string, url: string): Promise<ListData> {
+  const movies = await scrapeListMovies(url, MAX_MOVIES_PER_LIST);
   return { username, url, movies };
 }
 
-export async function scrapeAllLists(): Promise<MoviesData> {
-  const listData = await Promise.all(
-    lists.map((list) => scrapeList(list.username, list.url)),
+async function scrapePastWinnerSlugs(): Promise<string[]> {
+  const movies = await scrapeListMovies(
+    PAST_MOTW_WINNERS_URL,
+    MAX_PAST_WINNERS,
   );
+  return movies.map((movie) => movie.slug);
+}
+
+export async function scrapeAllLists(): Promise<MoviesData> {
+  const [listData, pastWinnerSlugs] = await Promise.all([
+    Promise.all(lists.map((list) => scrapeList(list.username, list.url))),
+    scrapePastWinnerSlugs(),
+  ]);
 
   return {
     scrapedAt: new Date().toISOString(),
     lists: listData,
+    pastWinnerSlugs,
   };
 }

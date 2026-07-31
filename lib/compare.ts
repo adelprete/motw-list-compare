@@ -3,12 +3,15 @@ import type { ListData, Movie } from "./types";
 export interface ComparedMovie extends Movie {
   count: number;
   inLists: string[];
+  alreadyWon: boolean;
 }
 
 export function compareLists(
   lists: ListData[],
   selectedUsernames: string[],
+  pastWinnerSlugs: Iterable<string> = [],
 ): ComparedMovie[] {
+  const winners = new Set(pastWinnerSlugs);
   const selected = lists.filter((list) =>
     selectedUsernames.includes(list.username),
   );
@@ -26,12 +29,15 @@ export function compareLists(
           ...movie,
           count: 1,
           inLists: [list.username],
+          alreadyWon: winners.has(movie.slug),
         });
       }
     }
   }
 
   return Array.from(bySlug.values()).sort((a, b) => {
+    // Past winners sort after eligible nominees.
+    if (a.alreadyWon !== b.alreadyWon) return a.alreadyWon ? 1 : -1;
     if (b.count !== a.count) return b.count - a.count;
     return a.title.localeCompare(b.title);
   });

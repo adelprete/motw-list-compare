@@ -19,6 +19,7 @@ export default function CompareApp() {
     try {
       const response = await fetch(
         fresh ? "/api/lists?fresh=1" : "/api/lists",
+        { signal: AbortSignal.timeout(90_000) },
       );
       const payload = await response.json();
 
@@ -35,7 +36,13 @@ export default function CompareApp() {
         return stillValid.length > 0 ? stillValid : usernames;
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load lists");
+      const message =
+        err instanceof Error && err.name === "TimeoutError"
+          ? "Timed out waiting for Letterboxd scrape. Try Refresh lists."
+          : err instanceof Error
+            ? err.message
+            : "Failed to load lists";
+      setError(message);
     } finally {
       setPending(false);
     }
@@ -53,9 +60,11 @@ export default function CompareApp() {
   const compared = useMemo(() => {
     if (!data) return [];
     const minCount = onlyShared ? 2 : 1;
-    return compareLists(data.lists, selected).filter(
-      (movie) => movie.count >= minCount,
-    );
+    return compareLists(
+      data.lists,
+      selected,
+      data.pastWinnerSlugs ?? [],
+    ).filter((movie) => movie.count >= minCount);
   }, [data, selected, onlyShared]);
 
   const loading = pending && !data;
@@ -230,14 +239,23 @@ function ErrorState({
 
 function MovieCard({ movie }: { movie: ComparedMovie }) {
   const [imgFailed, setImgFailed] = useState(false);
+  const won = movie.alreadyWon;
 
   return (
     <a
       href={`https://letterboxd.com/film/${movie.slug}/`}
       target="_blank"
       rel="noopener noreferrer"
-      className="group relative block overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
-      title={`${movie.title} — in ${movie.inLists.join(", ")}`}
+      className={`group relative block overflow-hidden rounded-xl border shadow-sm transition ${
+        won
+          ? "border-zinc-200 bg-zinc-50 opacity-55 hover:opacity-75 dark:border-zinc-800 dark:bg-zinc-950"
+          : "border-zinc-200 bg-zinc-100 hover:-translate-y-0.5 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
+      }`}
+      title={
+        won
+          ? `${movie.title} — already won MotW (still in ${movie.inLists.join(", ")})`
+          : `${movie.title} — in ${movie.inLists.join(", ")}`
+      }
     >
       <div className="relative aspect-[2/3] w-full overflow-hidden bg-zinc-200 dark:bg-zinc-800">
         {!imgFailed ? (
@@ -246,7 +264,11 @@ function MovieCard({ movie }: { movie: ComparedMovie }) {
             alt={movie.title}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
-            className="object-cover transition group-hover:scale-105"
+            className={`object-cover transition ${
+              won
+                ? "grayscale"
+                : "group-hover:scale-105"
+            }`}
             onError={() => setImgFailed(true)}
             unoptimized
           />
@@ -256,13 +278,21 @@ function MovieCard({ movie }: { movie: ComparedMovie }) {
           </div>
         )}
 
+        {won ? (
+          <span className="absolute left-2 top-2 rounded bg-zinc-800/85 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-200">
+            Already won
+          </span>
+        ) : null}
+
         <span
           className={`absolute right-2 top-2 flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-sm font-bold text-white shadow-md ${
-            movie.count >= 3
-              ? "bg-emerald-600"
-              : movie.count === 2
-                ? "bg-amber-500"
-                : "bg-zinc-700"
+            won
+              ? "bg-zinc-500"
+              : movie.count >= 3
+                ? "bg-emerald-600"
+                : movie.count === 2
+                  ? "bg-amber-500"
+                  : "bg-zinc-700"
           }`}
         >
           {movie.count}
@@ -270,7 +300,13 @@ function MovieCard({ movie }: { movie: ComparedMovie }) {
       </div>
 
       <div className="p-2.5">
-        <p className="line-clamp-2 text-sm font-medium leading-snug text-zinc-900 dark:text-zinc-100">
+        <p
+          className={`line-clamp-2 text-sm font-medium leading-snug ${
+            won
+              ? "text-zinc-500 dark:text-zinc-500"
+              : "text-zinc-900 dark:text-zinc-100"
+          }`}
+        >
           {movie.title}
         </p>
         <p className="mt-1 line-clamp-1 text-xs text-zinc-500 dark:text-zinc-400">
