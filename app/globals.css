@@ -1,26 +1,65 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fafafa;
-  --foreground: #171717;
+  --theme-background-color: #14181c;
+  --canvas: var(--theme-background-color);
+  --poster-well: #12161a;
+  --inset: #202830;
+  --elevated: #283038;
+  --divider: #2c3440;
+  --ink-body: #99aabb;
+  --ink-meta: #667788;
+  --ink-soft: #8899aa;
+  --ink-heading: #ffffff;
+  --ink-strong: #d8e0e8;
+  --link: #ddeeff;
+  --link-hover: #40bcf4;
+  --green: #00e054;
+  --green-cta: #00ac1c;
+  --green-hover: #00c030;
+  --green-active: #009926;
+  --orange: #ff8000;
+  --danger: #ec1200;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-canvas: var(--canvas);
+  --color-poster-well: var(--poster-well);
+  --color-inset: var(--inset);
+  --color-elevated: var(--elevated);
+  --color-divider: var(--divider);
+  --color-ink-body: var(--ink-body);
+  --color-ink-meta: var(--ink-meta);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-heading: var(--ink-heading);
+  --color-ink-strong: var(--ink-strong);
+  --color-link: var(--link);
+  --color-link-hover: var(--link-hover);
+  --color-green: var(--green);
+  --color-green-cta: var(--green-cta);
+  --color-green-hover: var(--green-hover);
+  --color-green-active: var(--green-active);
+  --color-orange: var(--orange);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-graphik);
+  --font-display: var(--font-tiempos);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #09090b;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
+  background: var(--canvas);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  background: var(--canvas);
+  color: var(--ink-body);
+  font-family: var(--font-graphik), "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--green) 35%, transparent);
+  color: var(--ink-heading);
 }

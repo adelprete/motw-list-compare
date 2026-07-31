@@ -122,18 +122,41 @@ async function scrapeList(username: string, url: string): Promise<ListData> {
 }
 
 async function scrapePastWinnerSlugs(): Promise<string[]> {
-  const movies = await scrapeListMovies(
-    PAST_MOTW_WINNERS_URL,
-    MAX_PAST_WINNERS,
-  );
-  return movies.map((movie) => movie.slug);
+  try {
+    const movies = await scrapeListMovies(
+      PAST_MOTW_WINNERS_URL,
+      MAX_PAST_WINNERS,
+    );
+    return movies.map((movie) => movie.slug);
+  } catch (error) {
+    console.error("Failed to scrape past MotW winners:", error);
+    return [];
+  }
 }
 
 export async function scrapeAllLists(): Promise<MoviesData> {
-  const [listData, pastWinnerSlugs] = await Promise.all([
-    Promise.all(lists.map((list) => scrapeList(list.username, list.url))),
+  const [listResults, pastWinnerSlugs] = await Promise.all([
+    Promise.allSettled(lists.map((list) => scrapeList(list.username, list.url))),
     scrapePastWinnerSlugs(),
   ]);
+
+  const listData: ListData[] = [];
+  for (let i = 0; i < listResults.length; i++) {
+    const result = listResults[i];
+    const config = lists[i];
+    if (result.status === "fulfilled") {
+      listData.push(result.value);
+      continue;
+    }
+    console.error(
+      `Failed to scrape list for ${config.username} (${config.url}):`,
+      result.reason,
+    );
+  }
+
+  if (listData.length === 0) {
+    throw new Error("Failed to scrape any Letterboxd lists");
+  }
 
   return {
     scrapedAt: new Date().toISOString(),

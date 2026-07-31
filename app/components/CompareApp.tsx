@@ -71,22 +71,24 @@ export default function CompareApp() {
   const refreshing = pending && !!data;
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-8 px-4 py-8 sm:px-6 sm:py-12">
+      <header className="flex flex-col gap-5 border-b border-divider pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            MOTW List Compare
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-meta">
+            The Lot · Movie of the Week
+          </p>
+          <h1 className="font-display text-[2rem] font-bold leading-tight tracking-tight text-ink-heading sm:text-[2.25rem]">
+            List Compare
           </h1>
-          <p className="text-zinc-600 dark:text-zinc-400">
-            Compare Letterboxd watchlists to see which movies appear most often.
+          <p className="max-w-xl text-[15px] leading-relaxed text-ink-body">
+            See which films show up most often across MotW watchlists.
             {data?.scrapedAt ? (
               <>
                 {" "}
-                Data scraped{" "}
-                <time dateTime={data.scrapedAt}>
+                Scraped{" "}
+                <time dateTime={data.scrapedAt} className="text-ink-soft">
                   {new Date(data.scrapedAt).toLocaleString()}
                 </time>
-                .
               </>
             ) : null}
           </p>
@@ -96,7 +98,7 @@ export default function CompareApp() {
           type="button"
           onClick={() => void loadLists(true)}
           disabled={pending}
-          className="shrink-0 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          className="shrink-0 rounded-[3px] bg-green-cta px-4 py-2 text-[13px] font-bold text-ink-heading transition hover:bg-green-hover active:bg-green-active disabled:cursor-not-allowed disabled:opacity-50"
         >
           {refreshing ? "Refreshing…" : "Refresh lists"}
         </button>
@@ -108,39 +110,40 @@ export default function CompareApp() {
         <ErrorState message={error} onRetry={() => void loadLists(true)} />
       ) : data ? (
         <>
-          <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                Lists to compare
+          <section className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <h2 className="text-[13px] font-bold uppercase tracking-[0.08em] text-ink-heading">
+                Lists
               </h2>
-              <div className="flex gap-2 text-sm">
+              <div className="flex gap-3 text-[13px]">
                 <button
                   type="button"
                   onClick={() => setSelected(usernames)}
-                  className="rounded-full border border-zinc-300 px-3 py-1 text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  className="text-link transition hover:text-link-hover"
                 >
                   Select all
                 </button>
+                <span className="text-divider">·</span>
                 <button
                   type="button"
                   onClick={() => setSelected([])}
-                  className="rounded-full border border-zinc-300 px-3 py-1 text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  className="text-link transition hover:text-link-hover"
                 >
                   Clear
                 </button>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
               {data.lists.map((list) => {
                 const isChecked = selected.includes(list.username);
                 return (
                   <label
                     key={list.username}
-                    className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
+                    className={`flex cursor-pointer items-center gap-2 rounded-[3px] px-3 py-1.5 text-[13px] font-medium transition ${
                       isChecked
-                        ? "border-emerald-500 bg-emerald-50 text-emerald-800 dark:border-emerald-400 dark:bg-emerald-950 dark:text-emerald-200"
-                        : "border-zinc-300 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
+                        ? "bg-elevated text-ink-heading ring-1 ring-green/70"
+                        : "bg-inset text-ink-meta hover:bg-elevated hover:text-ink-soft"
                     }`}
                   >
                     <input
@@ -153,47 +156,52 @@ export default function CompareApp() {
                             : [...prev, list.username],
                         )
                       }
-                      className="accent-emerald-600"
+                      className="sr-only"
+                    />
+                    <span
+                      className={`inline-block h-2 w-2 rounded-full ${
+                        isChecked ? "bg-green" : "bg-ink-meta/50"
+                      }`}
+                      aria-hidden
                     />
                     <span>{list.username}</span>
-                    <span className="text-xs opacity-70">
-                      ({list.movies.length})
+                    <span className="text-[11px] text-ink-meta">
+                      {list.movies.length}
                     </span>
                   </label>
                 );
               })}
             </div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-zinc-100 pt-4 dark:border-zinc-900">
-              <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-divider pt-4 text-[13px]">
+              <label className="flex cursor-pointer items-center gap-2 text-ink-soft">
                 <input
                   type="checkbox"
                   checked={onlyShared}
                   onChange={(e) => setOnlyShared(e.target.checked)}
-                  className="accent-emerald-600"
+                  className="size-3.5 rounded-[2px] border-divider accent-green-cta"
                 />
-                Only show movies in 2+ selected lists
+                Only films in 2+ lists
               </label>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Showing {compared.length} movie
-                {compared.length === 1 ? "" : "s"}
+              <p className="text-ink-meta">
+                {compared.length} film{compared.length === 1 ? "" : "s"}
                 {selected.length > 0
-                  ? ` across ${selected.length} list${selected.length === 1 ? "" : "s"}`
+                  ? ` · ${selected.length} list${selected.length === 1 ? "" : "s"}`
                   : ""}
               </p>
             </div>
           </section>
 
           {selected.length === 0 ? (
-            <p className="text-center text-zinc-500 dark:text-zinc-400">
+            <p className="py-16 text-center text-ink-meta">
               Select at least one list to compare.
             </p>
           ) : compared.length === 0 ? (
-            <p className="text-center text-zinc-500 dark:text-zinc-400">
-              No movies match the current filters.
+            <p className="py-16 text-center text-ink-meta">
+              No films match the current filters.
             </p>
           ) : (
-            <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            <ul className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {compared.map((movie) => (
                 <li key={movie.slug}>
                   <MovieCard movie={movie} />
@@ -209,9 +217,9 @@ export default function CompareApp() {
 
 function LoadingState() {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-24 text-zinc-500 dark:text-zinc-400">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-800 dark:border-zinc-700 dark:border-t-zinc-200" />
-      <p>Scraping Letterboxd lists…</p>
+    <div className="flex flex-col items-center justify-center gap-3 py-28 text-ink-meta">
+      <div className="h-7 w-7 animate-spin rounded-full border-2 border-divider border-t-green" />
+      <p className="text-[13px]">Loading lists…</p>
     </div>
   );
 }
@@ -224,12 +232,12 @@ function ErrorState({
   onRetry: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-red-200 bg-red-50 px-6 py-16 text-center dark:border-red-900 dark:bg-red-950/40">
-      <p className="text-red-800 dark:text-red-200">{message}</p>
+    <div className="flex flex-col items-center justify-center gap-4 px-6 py-20 text-center">
+      <p className="max-w-md text-ink-strong">{message}</p>
       <button
         type="button"
         onClick={onRetry}
-        className="rounded-full bg-red-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600"
+        className="rounded-[3px] bg-green-cta px-4 py-2 text-[13px] font-bold text-ink-heading transition hover:bg-green-hover"
       >
         Try again
       </button>
@@ -246,70 +254,68 @@ function MovieCard({ movie }: { movie: ComparedMovie }) {
       href={`https://letterboxd.com/film/${movie.slug}/`}
       target="_blank"
       rel="noopener noreferrer"
-      className={`group relative block overflow-hidden rounded-xl border shadow-sm transition ${
-        won
-          ? "border-zinc-200 bg-zinc-50 opacity-55 hover:opacity-75 dark:border-zinc-800 dark:bg-zinc-950"
-          : "border-zinc-200 bg-zinc-100 hover:-translate-y-0.5 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
-      }`}
+      className={`group block ${won ? "opacity-50 hover:opacity-80" : ""}`}
       title={
         won
           ? `${movie.title} — already won MotW (still in ${movie.inLists.join(", ")})`
           : `${movie.title} — in ${movie.inLists.join(", ")}`
       }
     >
-      <div className="relative aspect-[2/3] w-full overflow-hidden bg-zinc-200 dark:bg-zinc-800">
+      <div
+        className={`relative aspect-[2/3] w-full overflow-hidden rounded-[2px] bg-poster-well transition ${
+          won
+            ? ""
+            : "group-hover:outline group-hover:outline-2 group-hover:outline-offset-[-2px] group-hover:outline-green"
+        }`}
+      >
         {!imgFailed ? (
           <Image
             src={movie.posterUrl}
             alt={movie.title}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
-            className={`object-cover transition ${
-              won
-                ? "grayscale"
-                : "group-hover:scale-105"
-            }`}
+            className={`object-cover ${won ? "grayscale" : ""}`}
             onError={() => setImgFailed(true)}
             unoptimized
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center p-3 text-center text-sm font-medium text-zinc-600 dark:text-zinc-300">
+          <div className="flex h-full w-full items-center justify-center bg-inset p-3 text-center text-[13px] font-medium text-ink-soft">
             {movie.title}
           </div>
         )}
 
         {won ? (
-          <span className="absolute left-2 top-2 rounded bg-zinc-800/85 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-200">
-            Already won
+          <span className="absolute left-1.5 top-1.5 rounded-[2px] bg-canvas/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-meta">
+            Won
           </span>
         ) : null}
 
         <span
-          className={`absolute right-2 top-2 flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-sm font-bold text-white shadow-md ${
+          className={`absolute bottom-1.5 right-1.5 flex h-6 min-w-6 items-center justify-center rounded-[2px] px-1.5 text-[12px] font-bold text-ink-heading ${
             won
-              ? "bg-zinc-500"
+              ? "bg-ink-meta/80"
               : movie.count >= 3
-                ? "bg-emerald-600"
+                ? "bg-green-cta"
                 : movie.count === 2
-                  ? "bg-amber-500"
-                  : "bg-zinc-700"
+                  ? "bg-orange"
+                  : "bg-canvas/85"
           }`}
         >
           {movie.count}
         </span>
       </div>
 
-      <div className="p-2.5">
+      <div className="mt-2 px-0.5">
         <p
-          className={`line-clamp-2 text-sm font-medium leading-snug ${
+          className={`line-clamp-2 text-[13px] font-bold leading-snug ${
             won
-              ? "text-zinc-500 dark:text-zinc-500"
-              : "text-zinc-900 dark:text-zinc-100"
+              ? "text-ink-meta"
+              : "text-link group-hover:text-link-hover"
           }`}
         >
           {movie.title}
         </p>
-        <p className="mt-1 line-clamp-1 text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="mt-0.5 line-clamp-1 text-[11px] text-ink-meta">
           {movie.inLists.join(", ")}
         </p>
       </div>
