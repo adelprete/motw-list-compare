@@ -248,6 +248,14 @@ function ErrorState({
 function MovieCard({ movie }: { movie: ComparedMovie }) {
   const [imgFailed, setImgFailed] = useState(false);
   const won = movie.alreadyWon;
+  const criterion = movie.isCriterion;
+
+  const titleBits = [
+    movie.title,
+    won ? "already won MotW" : null,
+    criterion ? "Criterion Collection" : null,
+    `in ${movie.inLists.join(", ")}`,
+  ].filter(Boolean);
 
   return (
     <a
@@ -255,11 +263,7 @@ function MovieCard({ movie }: { movie: ComparedMovie }) {
       target="_blank"
       rel="noopener noreferrer"
       className={`group block ${won ? "opacity-50 hover:opacity-80" : ""}`}
-      title={
-        won
-          ? `${movie.title} — already won MotW (still in ${movie.inLists.join(", ")})`
-          : `${movie.title} — in ${movie.inLists.join(", ")}`
-      }
+      title={titleBits.join(" — ")}
     >
       <div
         className={`relative aspect-[2/3] w-full overflow-hidden rounded-[2px] bg-poster-well transition ${
@@ -284,11 +288,28 @@ function MovieCard({ movie }: { movie: ComparedMovie }) {
           </div>
         )}
 
-        {won ? (
-          <span className="absolute left-1.5 top-1.5 rounded-[2px] bg-canvas/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-meta">
-            Won
-          </span>
-        ) : null}
+        <div className="absolute left-1.5 top-1.5 flex flex-col items-start gap-1">
+          {won ? (
+            <span className="rounded-[2px] bg-canvas/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-meta">
+              Won
+            </span>
+          ) : null}
+          {criterion ? (
+            <span
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-black shadow-sm"
+              aria-label="Criterion Collection"
+            >
+              <Image
+                src="/criterion-logo.png"
+                alt=""
+                width={20}
+                height={20}
+                className="h-5 w-5 object-contain"
+                unoptimized
+              />
+            </span>
+          ) : null}
+        </div>
 
         <span
           className={`absolute bottom-1.5 right-1.5 flex h-6 min-w-6 items-center justify-center rounded-[2px] px-1.5 text-[12px] font-bold text-ink-heading ${

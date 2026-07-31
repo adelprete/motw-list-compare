@@ -1,9 +1,11 @@
 import type { ListData, Movie } from "./types";
+import { criterionSlugSet } from "./criterion-slugs";
 
 export interface ComparedMovie extends Movie {
   count: number;
   inLists: string[];
   alreadyWon: boolean;
+  isCriterion: boolean;
 }
 
 export function compareLists(
@@ -30,6 +32,7 @@ export function compareLists(
           count: 1,
           inLists: [list.username],
           alreadyWon: winners.has(movie.slug),
+          isCriterion: criterionSlugSet.has(movie.slug),
         });
       }
     }
