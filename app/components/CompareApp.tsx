@@ -12,6 +12,7 @@ export default function CompareApp() {
   const [selected, setSelected] = useState<string[]>([]);
   const [highlightUser, setHighlightUser] = useState<string | null>(null);
   const [onlyShared, setOnlyShared] = useState(false);
+  const [onlyUnique, setOnlyUnique] = useState(false);
 
   const loadLists = useCallback(async (fresh = false) => {
     setPending(true);
@@ -63,13 +64,16 @@ export default function CompareApp() {
 
   const compared = useMemo(() => {
     if (!data) return [];
-    const minCount = onlyShared ? 2 : 1;
     return compareLists(
       data.lists,
       selected,
       data.pastWinnerSlugs ?? [],
-    ).filter((movie) => movie.count >= minCount);
-  }, [data, selected, onlyShared]);
+    ).filter((movie) => {
+      if (onlyShared) return movie.count >= 2;
+      if (onlyUnique) return movie.count === 1;
+      return true;
+    });
+  }, [data, selected, onlyShared, onlyUnique]);
 
   const loading = pending && !data;
   const refreshing = pending && !!data;
@@ -192,10 +196,25 @@ export default function CompareApp() {
                   <input
                     type="checkbox"
                     checked={onlyShared}
-                    onChange={(e) => setOnlyShared(e.target.checked)}
+                    onChange={(e) => {
+                      setOnlyShared(e.target.checked);
+                      if (e.target.checked) setOnlyUnique(false);
+                    }}
                     className="size-3.5 rounded-[2px] border-divider accent-green-cta"
                   />
                   Only films in 2+ lists
+                </label>
+                <label className="flex cursor-pointer items-center gap-2 text-ink-soft">
+                  <input
+                    type="checkbox"
+                    checked={onlyUnique}
+                    onChange={(e) => {
+                      setOnlyUnique(e.target.checked);
+                      if (e.target.checked) setOnlyShared(false);
+                    }}
+                    className="size-3.5 rounded-[2px] border-divider accent-green-cta"
+                  />
+                  Only films in 1 list
                 </label>
                 <label className="flex items-center gap-2 text-ink-soft">
                   <span className="shrink-0">Highlight</span>
