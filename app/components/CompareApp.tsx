@@ -238,7 +238,7 @@ export default function CompareApp() {
               No films match the current filters.
             </p>
           ) : (
-            <ul className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            <ul className="grid grid-cols-4 gap-x-3 gap-y-6 lg:grid-cols-5 xl:grid-cols-6">
               {compared.map((movie) => {
                 const isHighlighted =
                   highlightUser !== null &&
