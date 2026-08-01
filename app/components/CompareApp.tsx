@@ -10,6 +10,7 @@ export default function CompareApp() {
   const [pending, setPending] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
+  const [focusUser, setFocusUser] = useState<string | null>(null);
   const [onlyShared, setOnlyShared] = useState(false);
 
   const loadLists = useCallback(async (fresh = false) => {
@@ -35,6 +36,9 @@ export default function CompareApp() {
         const stillValid = prev.filter((u) => usernames.includes(u));
         return stillValid.length > 0 ? stillValid : usernames;
       });
+      setFocusUser((prev) =>
+        prev && usernames.includes(prev) ? prev : null,
+      );
     } catch (err) {
       const message =
         err instanceof Error && err.name === "TimeoutError"
@@ -64,8 +68,12 @@ export default function CompareApp() {
       data.lists,
       selected,
       data.pastWinnerSlugs ?? [],
-    ).filter((movie) => movie.count >= minCount);
-  }, [data, selected, onlyShared]);
+    ).filter((movie) => {
+      if (movie.count < minCount) return false;
+      if (focusUser && !movie.inLists.includes(focusUser)) return false;
+      return true;
+    });
+  }, [data, selected, onlyShared, focusUser]);
 
   const loading = pending && !data;
   const refreshing = pending && !!data;
@@ -78,7 +86,7 @@ export default function CompareApp() {
             The Lot · Movie of the Week
           </p>
           <h1 className="font-display text-[2rem] font-bold leading-tight tracking-tight text-ink-heading sm:text-[2.25rem]">
-            List Compare
+            MOTW Lists
           </h1>
           <p className="max-w-xl text-[15px] leading-relaxed text-ink-body">
             See which films show up most often across MotW watchlists.
@@ -113,7 +121,7 @@ export default function CompareApp() {
           <section className="flex flex-col gap-4">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <h2 className="text-[13px] font-bold uppercase tracking-[0.08em] text-ink-heading">
-                Lists
+                Included Lists
               </h2>
               <div className="flex gap-3 text-[13px]">
                 <button
@@ -126,7 +134,10 @@ export default function CompareApp() {
                 <span className="text-divider">·</span>
                 <button
                   type="button"
-                  onClick={() => setSelected([])}
+                  onClick={() => {
+                    setSelected([]);
+                    setFocusUser(null);
+                  }}
                   className="text-link transition hover:text-link-hover"
                 >
                   Clear
@@ -149,13 +160,17 @@ export default function CompareApp() {
                     <input
                       type="checkbox"
                       checked={isChecked}
-                      onChange={() =>
+                      onChange={() => {
+                        const removing = selected.includes(list.username);
                         setSelected((prev) =>
-                          prev.includes(list.username)
+                          removing
                             ? prev.filter((u) => u !== list.username)
                             : [...prev, list.username],
-                        )
-                      }
+                        );
+                        if (removing && focusUser === list.username) {
+                          setFocusUser(null);
+                        }
+                      }}
                       className="sr-only"
                     />
                     <span
@@ -173,22 +188,48 @@ export default function CompareApp() {
               })}
             </div>
 
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-divider pt-4 text-[13px]">
-              <label className="flex cursor-pointer items-center gap-2 text-ink-soft">
-                <input
-                  type="checkbox"
-                  checked={onlyShared}
-                  onChange={(e) => setOnlyShared(e.target.checked)}
-                  className="size-3.5 rounded-[2px] border-divider accent-green-cta"
-                />
-                Only films in 2+ lists
-              </label>
-              <p className="text-ink-meta">
-                {compared.length} film{compared.length === 1 ? "" : "s"}
-                {selected.length > 0
-                  ? ` · ${selected.length} list${selected.length === 1 ? "" : "s"}`
-                  : ""}
-              </p>
+            <div className="flex flex-col gap-3 border-t border-divider pt-4">
+              <h2 className="text-[13px] font-bold uppercase tracking-[0.08em] text-ink-heading">
+                Filters
+              </h2>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px]">
+                <label className="flex cursor-pointer items-center gap-2 text-ink-soft">
+                  <input
+                    type="checkbox"
+                    checked={onlyShared}
+                    onChange={(e) => setOnlyShared(e.target.checked)}
+                    className="size-3.5 rounded-[2px] border-divider accent-green-cta"
+                  />
+                  Only films in 2+ lists
+                </label>
+                <label className="flex items-center gap-2 text-ink-soft">
+                  <span className="shrink-0">Only from</span>
+                  <select
+                    value={focusUser ?? ""}
+                    onChange={(e) => {
+                      const username = e.target.value || null;
+                      setFocusUser(username);
+                      if (username && !selected.includes(username)) {
+                        setSelected((prev) => [...prev, username]);
+                      }
+                    }}
+                    className="rounded-[3px] border border-divider bg-inset px-2 py-1 text-[13px] text-ink-heading outline-none focus:border-green/70"
+                  >
+                    <option value="">All lists</option>
+                    {data.lists.map((list) => (
+                      <option key={list.username} value={list.username}>
+                        {list.username}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <p className="text-ink-meta">
+                  {compared.length} film{compared.length === 1 ? "" : "s"}
+                  {selected.length > 0
+                    ? ` · ${selected.length} list${selected.length === 1 ? "" : "s"}`
+                    : ""}
+                </p>
+              </div>
             </div>
           </section>
 

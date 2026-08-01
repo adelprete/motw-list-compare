@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MOTW List Compare",
+  title: "MOTW Lists",
   description:
     "Compare Letterboxd MOTW watchlists and see which movies appear most often.",
 };
