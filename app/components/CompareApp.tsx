@@ -10,7 +10,7 @@ export default function CompareApp() {
   const [pending, setPending] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
-  const [focusUser, setFocusUser] = useState<string | null>(null);
+  const [highlightUser, setHighlightUser] = useState<string | null>(null);
   const [onlyShared, setOnlyShared] = useState(false);
 
   const loadLists = useCallback(async (fresh = false) => {
@@ -36,7 +36,7 @@ export default function CompareApp() {
         const stillValid = prev.filter((u) => usernames.includes(u));
         return stillValid.length > 0 ? stillValid : usernames;
       });
-      setFocusUser((prev) =>
+      setHighlightUser((prev) =>
         prev && usernames.includes(prev) ? prev : null,
       );
     } catch (err) {
@@ -68,12 +68,8 @@ export default function CompareApp() {
       data.lists,
       selected,
       data.pastWinnerSlugs ?? [],
-    ).filter((movie) => {
-      if (movie.count < minCount) return false;
-      if (focusUser && !movie.inLists.includes(focusUser)) return false;
-      return true;
-    });
-  }, [data, selected, onlyShared, focusUser]);
+    ).filter((movie) => movie.count >= minCount);
+  }, [data, selected, onlyShared]);
 
   const loading = pending && !data;
   const refreshing = pending && !!data;
@@ -136,7 +132,7 @@ export default function CompareApp() {
                   type="button"
                   onClick={() => {
                     setSelected([]);
-                    setFocusUser(null);
+                    setHighlightUser(null);
                   }}
                   className="text-link transition hover:text-link-hover"
                 >
@@ -167,8 +163,8 @@ export default function CompareApp() {
                             ? prev.filter((u) => u !== list.username)
                             : [...prev, list.username],
                         );
-                        if (removing && focusUser === list.username) {
-                          setFocusUser(null);
+                        if (removing && highlightUser === list.username) {
+                          setHighlightUser(null);
                         }
                       }}
                       className="sr-only"
@@ -203,19 +199,19 @@ export default function CompareApp() {
                   Only films in 2+ lists
                 </label>
                 <label className="flex items-center gap-2 text-ink-soft">
-                  <span className="shrink-0">Only from</span>
+                  <span className="shrink-0">Highlight</span>
                   <select
-                    value={focusUser ?? ""}
+                    value={highlightUser ?? ""}
                     onChange={(e) => {
                       const username = e.target.value || null;
-                      setFocusUser(username);
+                      setHighlightUser(username);
                       if (username && !selected.includes(username)) {
                         setSelected((prev) => [...prev, username]);
                       }
                     }}
                     className="rounded-[3px] border border-divider bg-inset px-2 py-1 text-[13px] text-ink-heading outline-none focus:border-green/70"
                   >
-                    <option value="">All lists</option>
+                    <option value="">None</option>
                     {data.lists.map((list) => (
                       <option key={list.username} value={list.username}>
                         {list.username}
@@ -243,11 +239,20 @@ export default function CompareApp() {
             </p>
           ) : (
             <ul className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {compared.map((movie) => (
-                <li key={movie.slug}>
-                  <MovieCard movie={movie} />
-                </li>
-              ))}
+              {compared.map((movie) => {
+                const isHighlighted =
+                  highlightUser !== null &&
+                  movie.inLists.includes(highlightUser);
+                return (
+                  <li key={movie.slug}>
+                    <MovieCard
+                      movie={movie}
+                      highlighted={isHighlighted}
+                      dimmed={highlightUser !== null && !isHighlighted}
+                    />
+                  </li>
+                );
+              })}
             </ul>
           )}
         </>
@@ -286,7 +291,15 @@ function ErrorState({
   );
 }
 
-function MovieCard({ movie }: { movie: ComparedMovie }) {
+function MovieCard({
+  movie,
+  highlighted = false,
+  dimmed = false,
+}: {
+  movie: ComparedMovie;
+  highlighted?: boolean;
+  dimmed?: boolean;
+}) {
   const [imgFailed, setImgFailed] = useState(false);
   const won = movie.alreadyWon;
   const criterion = movie.isCriterion;
@@ -295,6 +308,7 @@ function MovieCard({ movie }: { movie: ComparedMovie }) {
     movie.title,
     won ? "already won MotW" : null,
     criterion ? "Criterion Collection" : null,
+    highlighted ? "highlighted" : null,
     `in ${movie.inLists.join(", ")}`,
   ].filter(Boolean);
 
@@ -303,76 +317,88 @@ function MovieCard({ movie }: { movie: ComparedMovie }) {
       href={`https://letterboxd.com/film/${movie.slug}/`}
       target="_blank"
       rel="noopener noreferrer"
-      className={`group block ${won ? "opacity-50 hover:opacity-80" : ""}`}
+      className={`group block transition ${
+        dimmed
+          ? "opacity-35 hover:opacity-55"
+          : won
+            ? "opacity-50 hover:opacity-80"
+            : ""
+      }`}
       title={titleBits.join(" — ")}
     >
       <div
-        className={`relative aspect-[2/3] w-full overflow-hidden rounded-[2px] bg-poster-well transition ${
-          won
-            ? ""
-            : "group-hover:outline group-hover:outline-2 group-hover:outline-offset-[-2px] group-hover:outline-green"
+        className={`relative aspect-[2/3] w-full rounded-[2px] bg-poster-well transition ${
+          highlighted
+            ? "shadow-[0_0_0_3px_#ff8000,0_0_16px_4px_rgba(255,128,0,0.55)]"
+            : won
+              ? ""
+              : "group-hover:outline group-hover:outline-2 group-hover:outline-offset-[-2px] group-hover:outline-green"
         }`}
       >
-        {!imgFailed ? (
-          <Image
-            src={movie.posterUrl}
-            alt={movie.title}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
-            className={`object-cover ${won ? "grayscale" : ""}`}
-            onError={() => setImgFailed(true)}
-            unoptimized
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-inset p-3 text-center text-[13px] font-medium text-ink-soft">
-            {movie.title}
+        <div className="relative h-full w-full overflow-hidden rounded-[2px]">
+          {!imgFailed ? (
+            <Image
+              src={movie.posterUrl}
+              alt={movie.title}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
+              className={`object-cover ${won ? "grayscale" : ""}`}
+              onError={() => setImgFailed(true)}
+              unoptimized
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-inset p-3 text-center text-[13px] font-medium text-ink-soft">
+              {movie.title}
+            </div>
+          )}
+
+          <div className="absolute left-1.5 top-1.5 flex flex-col items-start gap-1">
+            {won ? (
+              <span className="rounded-[2px] bg-canvas/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-meta">
+                Won
+              </span>
+            ) : null}
+            {criterion ? (
+              <span
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-black shadow-sm"
+                aria-label="Criterion Collection"
+              >
+                <Image
+                  src="/criterion-logo.png"
+                  alt=""
+                  width={20}
+                  height={20}
+                  className="h-5 w-5 object-contain"
+                  unoptimized
+                />
+              </span>
+            ) : null}
           </div>
-        )}
 
-        <div className="absolute left-1.5 top-1.5 flex flex-col items-start gap-1">
-          {won ? (
-            <span className="rounded-[2px] bg-canvas/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-meta">
-              Won
-            </span>
-          ) : null}
-          {criterion ? (
-            <span
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-black shadow-sm"
-              aria-label="Criterion Collection"
-            >
-              <Image
-                src="/criterion-logo.png"
-                alt=""
-                width={20}
-                height={20}
-                className="h-5 w-5 object-contain"
-                unoptimized
-              />
-            </span>
-          ) : null}
+          <span
+            className={`absolute bottom-1.5 right-1.5 flex h-6 min-w-6 items-center justify-center rounded-[2px] px-1.5 text-[12px] font-bold text-ink-heading ${
+              won
+                ? "bg-ink-meta/80"
+                : movie.count >= 3
+                  ? "bg-green-cta"
+                  : movie.count === 2
+                    ? "bg-orange"
+                    : "bg-canvas/85"
+            }`}
+          >
+            {movie.count}
+          </span>
         </div>
-
-        <span
-          className={`absolute bottom-1.5 right-1.5 flex h-6 min-w-6 items-center justify-center rounded-[2px] px-1.5 text-[12px] font-bold text-ink-heading ${
-            won
-              ? "bg-ink-meta/80"
-              : movie.count >= 3
-                ? "bg-green-cta"
-                : movie.count === 2
-                  ? "bg-orange"
-                  : "bg-canvas/85"
-          }`}
-        >
-          {movie.count}
-        </span>
       </div>
 
       <div className="mt-2 px-0.5">
         <p
           className={`line-clamp-2 text-[13px] font-bold leading-snug ${
-            won
+            dimmed || won
               ? "text-ink-meta"
-              : "text-link group-hover:text-link-hover"
+              : highlighted
+                ? "text-orange"
+                : "text-link group-hover:text-link-hover"
           }`}
         >
           {movie.title}
