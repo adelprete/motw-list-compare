@@ -86,16 +86,15 @@ export default function CompareApp() {
           </h1>
           <p className="max-w-xl text-[15px] leading-relaxed text-ink-body">
             See which films show up most often across MotW watchlists.
-            {data?.scrapedAt ? (
-              <>
-                {" "}
-                Scraped{" "}
-                <time dateTime={data.scrapedAt} className="text-ink-soft">
-                  {new Date(data.scrapedAt).toLocaleString()}
-                </time>
-              </>
-            ) : null}
           </p>
+          {data?.scrapedAt ? (
+            <p className="text-[13px] text-ink-meta">
+              Scraped{" "}
+              <time dateTime={data.scrapedAt} className="text-ink-soft">
+                {new Date(data.scrapedAt).toLocaleString()}
+              </time>
+            </p>
+          ) : null}
         </div>
 
         <button
