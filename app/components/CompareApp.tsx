@@ -89,7 +89,16 @@ export default function CompareApp() {
             MOTW Lists
           </h1>
           <p className="max-w-xl text-[15px] leading-relaxed text-ink-body">
-            See which films show up most often across MotW watchlists.
+            See which films show up most often across MotW watchlists from{" "}
+            <a
+              href="https://discord.gg/4UqEmXXd2p"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-link transition hover:text-link-hover"
+            >
+              The Lot
+            </a>
+            , a film Discord server.
           </p>
           {data?.scrapedAt ? (
             <p className="text-[13px] text-ink-meta">

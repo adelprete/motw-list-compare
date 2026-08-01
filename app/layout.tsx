@@ -19,9 +19,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MOTW Lists",
+  title: "MOTW Lists · The Lot",
   description:
-    "Compare Letterboxd MOTW watchlists and see which movies appear most often.",
+    "Compare Letterboxd MotW watchlists from The Lot film Discord and see which movies appear most often.",
 };
 
 export default function RootLayout({
