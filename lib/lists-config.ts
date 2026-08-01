@@ -76,6 +76,10 @@ export const lists: ListConfig[] = [
     username: "molliebae",
     url: "https://letterboxd.com/molliecule/list/the-lot-motw/",
   },
+  {
+    username: "anar",
+    url: "https://letterboxd.com/tomoritomo/list/motw-watchlist-1/",
+  },
 ];
 
 /** Past MotW winners — used to de-emphasize already-won titles in the compare UI. */
