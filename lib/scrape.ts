@@ -2,8 +2,10 @@ import * as cheerio from "cheerio";
 import {
   lists,
   LETTERBOXD_PAGE_SIZE,
+  LETTERBOXD_TOP_500_URL,
   MAX_MOVIES_PER_LIST,
   MAX_PAST_WINNERS,
+  MAX_TOP_500,
   PAST_MOTW_WINNERS_URL,
 } from "./lists-config";
 import type { ListData, Movie, MoviesData } from "./types";
@@ -121,23 +123,33 @@ async function scrapeList(username: string, url: string): Promise<ListData> {
   return { username, url, movies };
 }
 
-async function scrapePastWinnerSlugs(): Promise<string[]> {
+async function scrapeSlugList(
+  url: string,
+  maxMovies: number,
+  label: string,
+): Promise<string[]> {
   try {
-    const movies = await scrapeListMovies(
-      PAST_MOTW_WINNERS_URL,
-      MAX_PAST_WINNERS,
-    );
+    const movies = await scrapeListMovies(url, maxMovies);
     return movies.map((movie) => movie.slug);
   } catch (error) {
-    console.error("Failed to scrape past MotW winners:", error);
+    console.error(`Failed to scrape ${label}:`, error);
     return [];
   }
 }
 
 export async function scrapeAllLists(): Promise<MoviesData> {
-  const [listResults, pastWinnerSlugs] = await Promise.all([
+  const [listResults, pastWinnerSlugs, top500Slugs] = await Promise.all([
     Promise.allSettled(lists.map((list) => scrapeList(list.username, list.url))),
-    scrapePastWinnerSlugs(),
+    scrapeSlugList(
+      PAST_MOTW_WINNERS_URL,
+      MAX_PAST_WINNERS,
+      "past MotW winners",
+    ),
+    scrapeSlugList(
+      LETTERBOXD_TOP_500_URL,
+      MAX_TOP_500,
+      "Letterboxd Top 500",
+    ),
   ]);
 
   const listData: ListData[] = [];
@@ -162,5 +174,6 @@ export async function scrapeAllLists(): Promise<MoviesData> {
     scrapedAt: new Date().toISOString(),
     lists: listData,
     pastWinnerSlugs,
+    top500Slugs,
   };
 }

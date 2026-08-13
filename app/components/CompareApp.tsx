@@ -13,6 +13,7 @@ export default function CompareApp() {
   const [highlightUser, setHighlightUser] = useState<string | null>(null);
   const [onlyShared, setOnlyShared] = useState(false);
   const [onlyUnique, setOnlyUnique] = useState(false);
+  const [onlyTop500, setOnlyTop500] = useState(false);
 
   const loadLists = useCallback(async (fresh = false) => {
     setPending(true);
@@ -68,12 +69,14 @@ export default function CompareApp() {
       data.lists,
       selected,
       data.pastWinnerSlugs ?? [],
+      data.top500Slugs ?? [],
     ).filter((movie) => {
+      if (onlyTop500 && !movie.isTop500) return false;
       if (onlyShared) return movie.count >= 2;
       if (onlyUnique) return movie.count === 1;
       return true;
     });
-  }, [data, selected, onlyShared, onlyUnique]);
+  }, [data, selected, onlyShared, onlyUnique, onlyTop500]);
 
   const loading = pending && !data;
   const refreshing = pending && !!data;
@@ -225,6 +228,15 @@ export default function CompareApp() {
                   />
                   Only films in 1 list
                 </label>
+                <label className="flex cursor-pointer items-center gap-2 text-ink-soft">
+                  <input
+                    type="checkbox"
+                    checked={onlyTop500}
+                    onChange={(e) => setOnlyTop500(e.target.checked)}
+                    className="size-3.5 rounded-[2px] border-divider accent-green-cta"
+                  />
+                  Only Letterboxd Top 500
+                </label>
                 <label className="flex items-center gap-2 text-ink-soft">
                   <span className="shrink-0">Highlight</span>
                   <select
@@ -330,11 +342,13 @@ function MovieCard({
   const [imgFailed, setImgFailed] = useState(false);
   const won = movie.alreadyWon;
   const criterion = movie.isCriterion;
+  const top500 = movie.isTop500;
 
   const titleBits = [
     movie.title,
     won ? "already won MotW" : null,
     criterion ? "Criterion Collection" : null,
+    top500 ? "Letterboxd Top 500" : null,
     highlighted ? "highlighted" : null,
     `in ${movie.inLists.join(", ")}`,
   ].filter(Boolean);
@@ -430,6 +444,11 @@ function MovieCard({
         >
           {movie.title}
         </p>
+        {top500 ? (
+          <p className="mt-0.5 text-[11px] font-medium text-ink-soft">
+            Top 500
+          </p>
+        ) : null}
         <p className="mt-0.5 line-clamp-1 text-[11px] text-ink-meta">
           {movie.inLists.join(", ")}
         </p>

@@ -1,5 +1,9 @@
 import { revalidateTag, unstable_cache } from "next/cache";
-import { lists } from "@/lib/lists-config";
+import {
+  LETTERBOXD_TOP_500_URL,
+  lists,
+  PAST_MOTW_WINNERS_URL,
+} from "@/lib/lists-config";
 import { scrapeAllLists } from "@/lib/scrape";
 
 export const runtime = "nodejs";
@@ -8,9 +12,11 @@ const CACHE_SECONDS = 60 * 5;
 const LISTS_TAG = "letterboxd-lists";
 
 /** Bust Data Cache when the configured lists change (survives deploys). */
-const listsFingerprint = lists
-  .map((list) => `${list.username}:${list.url}`)
-  .join("|");
+const listsFingerprint = [
+  ...lists.map((list) => `${list.username}:${list.url}`),
+  PAST_MOTW_WINNERS_URL,
+  LETTERBOXD_TOP_500_URL,
+].join("|");
 
 const getCachedLists = unstable_cache(
   async () => scrapeAllLists(),

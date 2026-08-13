@@ -6,14 +6,17 @@ export interface ComparedMovie extends Movie {
   inLists: string[];
   alreadyWon: boolean;
   isCriterion: boolean;
+  isTop500: boolean;
 }
 
 export function compareLists(
   lists: ListData[],
   selectedUsernames: string[],
   pastWinnerSlugs: Iterable<string> = [],
+  top500Slugs: Iterable<string> = [],
 ): ComparedMovie[] {
   const winners = new Set(pastWinnerSlugs);
+  const top500 = new Set(top500Slugs);
   const selected = lists.filter((list) =>
     selectedUsernames.includes(list.username),
   );
@@ -33,6 +36,7 @@ export function compareLists(
           inLists: [list.username],
           alreadyWon: winners.has(movie.slug),
           isCriterion: criterionSlugSet.has(movie.slug),
+          isTop500: top500.has(movie.slug),
         });
       }
     }

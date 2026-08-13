@@ -86,11 +86,18 @@ export const lists: ListConfig[] = [
 export const PAST_MOTW_WINNERS_URL =
   "https://letterboxd.com/disruptr/list/the-lots-motw/";
 
+/** Official Letterboxd Top 500 narrative features by average rating. */
+export const LETTERBOXD_TOP_500_URL =
+  "https://letterboxd.com/official/list/letterboxds-top-500-films/";
+
 /** Cap of movies kept per nomination list. */
 export const MAX_MOVIES_PER_LIST = 100;
 
 /** Cap when scraping the past-winners archive (multi-page). */
 export const MAX_PAST_WINNERS = 1000;
+
+/** Cap when scraping Letterboxd's Top 500 (5 pages). */
+export const MAX_TOP_500 = 500;
 
 /** Letterboxd list grid page size. */
 export const LETTERBOXD_PAGE_SIZE = 100;

@@ -15,4 +15,6 @@ export interface MoviesData {
   lists: ListData[];
   /** Letterboxd slugs of past MotW winners. */
   pastWinnerSlugs: string[];
+  /** Letterboxd slugs from the official Top 500 narrative films list. */
+  top500Slugs: string[];
 }
