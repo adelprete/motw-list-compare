@@ -14,6 +14,7 @@ export default function CompareApp() {
   const [onlyShared, setOnlyShared] = useState(false);
   const [onlyUnique, setOnlyUnique] = useState(false);
   const [onlyTop500, setOnlyTop500] = useState(false);
+  const [query, setQuery] = useState("");
 
   const loadLists = useCallback(async (fresh = false) => {
     setPending(true);
@@ -65,6 +66,7 @@ export default function CompareApp() {
 
   const compared = useMemo(() => {
     if (!data) return [];
+    const needle = query.trim().toLowerCase();
     return compareLists(
       data.lists,
       selected,
@@ -72,11 +74,12 @@ export default function CompareApp() {
       data.top500Slugs ?? [],
     ).filter((movie) => {
       if (onlyTop500 && !movie.isTop500) return false;
-      if (onlyShared) return movie.count >= 2;
-      if (onlyUnique) return movie.count === 1;
+      if (onlyShared && movie.count < 2) return false;
+      if (onlyUnique && movie.count !== 1) return false;
+      if (needle && !movie.title.toLowerCase().includes(needle)) return false;
       return true;
     });
-  }, [data, selected, onlyShared, onlyUnique, onlyTop500]);
+  }, [data, selected, onlyShared, onlyUnique, onlyTop500, query]);
 
   const loading = pending && !data;
   const refreshing = pending && !!data;
@@ -203,6 +206,18 @@ export default function CompareApp() {
               <h2 className="text-[13px] font-bold uppercase tracking-[0.08em] text-ink-heading">
                 Filters
               </h2>
+              <label className="block max-w-md">
+                <span className="sr-only">Search titles</span>
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search titles…"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="w-full rounded-[3px] border border-divider bg-inset px-3 py-2 text-[13px] text-ink-heading outline-none placeholder:text-ink-meta focus:border-green/70"
+                />
+              </label>
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px]">
                 <label className="flex cursor-pointer items-center gap-2 text-ink-soft">
                   <input
