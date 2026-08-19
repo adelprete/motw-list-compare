@@ -461,7 +461,7 @@ function MovieCard({
         </p>
         {top500 ? (
           <p className="mt-0.5 text-[11px] font-medium text-ink-soft">
-            Top 500
+            LB Top 500
           </p>
         ) : null}
         <p className="mt-0.5 line-clamp-1 text-[11px] text-ink-meta">
